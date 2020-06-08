@@ -662,7 +662,7 @@ namespace global
 module Program =
     let x = N.
 """
-    VerifyCompletionList(fileContents, "N.", ["DU"], [])
+    VerifyCompletionList(fileContents, "N.", ["DU"], ["A"; "B"; "C"])
 
 #if EXE
 ShouldDisplaySystemNamespace()
