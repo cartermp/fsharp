@@ -593,10 +593,19 @@ type FSharpDeclarationListInfo(declarations: FSharpDeclarationListItem[], isForT
                     | _ -> false
                 | _ -> false
 
+            let isUnionCaseWithRequireQualifiedAccess (items: CompletionItem list) =
+                match items with
+                | [item] ->
+                    match item.Item with
+                    | Item.UnionCase(_, hasRequireQualifiedAccessAttr) -> hasRequireQualifiedAccessAttr
+                    | _ -> false
+                | _ -> false
+
             items |> List.filter (fun (displayName, items) -> 
                 not (isOperatorItem displayName items) && 
                 not (displayName = "[]") && // list shows up as a Type and a UnionCase, only such entity with a symbolic name, but want to filter out of intellisense
-                not (isActivePatternItem items))
+                not (isActivePatternItem items) &&
+                not (isUnionCaseWithRequireQualifiedAccess items))
 
         let decls = 
             items 

@@ -750,24 +750,26 @@ let AddTyconByAccessNames bulkAddMode (tcrefs: TyconRef[]) (tab: LayeredMultiMap
 let AddRecdField (rfref: RecdFieldRef) tab = NameMultiMap.add rfref.FieldName rfref tab
 
 /// Add a set of union cases to the corresponding sub-table of the environment
-let AddUnionCases1 (tab: Map<_, _>) (ucrefs: UnionCaseRef list) =
+let AddUnionCases1 (tab: Map<_, _>) (ucrefs: UnionCaseRef list) g attribs =
     (tab, ucrefs) ||> List.fold (fun acc ucref ->
-        let item = Item.UnionCase(GeneralizeUnionCaseRef ucref, false)
+        let hasRequireQualifiedAccessAttribute = HasFSharpAttribute g g.attrib_RequireQualifiedAccessAttribute attribs
+        let item = Item.UnionCase(GeneralizeUnionCaseRef ucref, hasRequireQualifiedAccessAttribute)
         acc.Add (ucref.CaseName, item))
 
 /// Add a set of union cases to the corresponding sub-table of the environment
-let AddUnionCases2 bulkAddMode (eUnqualifiedItems: UnqualifiedItems) (ucrefs: UnionCaseRef list) =
+let AddUnionCases2 bulkAddMode (eUnqualifiedItems: UnqualifiedItems) (ucrefs: UnionCaseRef list) g attribs =
+    let hasRequireQualifiedAccessAttribute = HasFSharpAttribute g g.attrib_RequireQualifiedAccessAttribute attribs
     match bulkAddMode with
     | BulkAdd.Yes ->
         let items =
             ucrefs |> Array.ofList |> Array.map (fun ucref ->
-                let item = Item.UnionCase(GeneralizeUnionCaseRef ucref, false)
+                let item = Item.UnionCase(GeneralizeUnionCaseRef ucref, hasRequireQualifiedAccessAttribute)
                 KeyValuePair(ucref.CaseName, item))
         eUnqualifiedItems.AddAndMarkAsCollapsible items
 
     | BulkAdd.No ->
         (eUnqualifiedItems, ucrefs) ||> List.fold (fun acc ucref ->
-            let item = Item.UnionCase(GeneralizeUnionCaseRef ucref, false)
+            let item = Item.UnionCase(GeneralizeUnionCaseRef ucref, hasRequireQualifiedAccessAttribute)
             acc.Add (ucref.CaseName, item))
 
 let AddStaticContentOfTyconRefToNameEnv (g:TcGlobals) (amap: Import.ImportMap) ad m (nenv: NameResolutionEnv) (tcref:TyconRef) =
@@ -862,7 +864,7 @@ let private AddPartsOfTyconRefToNameEnv bulkAddMode ownDefinition (g: TcGlobals)
             if isILOrRequiredQualifiedAccess || List.isEmpty ucrefs then
                 tab
             else
-                AddUnionCases2 bulkAddMode tab ucrefs
+                AddUnionCases2 bulkAddMode tab ucrefs g tcref.Attribs
 
         tab
 
@@ -870,7 +872,7 @@ let private AddPartsOfTyconRefToNameEnv bulkAddMode ownDefinition (g: TcGlobals)
         if isILOrRequiredQualifiedAccess || List.isEmpty ucrefs then
             nenv.ePatItems
         else
-            AddUnionCases1 nenv.ePatItems ucrefs
+            AddUnionCases1 nenv.ePatItems ucrefs g tcref.Attribs
 
     let nenv = 
         { nenv with
@@ -1063,7 +1065,8 @@ let FreshenUnionCaseRef (ncenv: NameResolver) m (ucref: UnionCaseRef) =
 /// This must be called after fetching unqualified items that may need to be freshened
 let FreshenUnqualifiedItem (ncenv: NameResolver) m res =
     match res with
-    | Item.UnionCase(UnionCaseInfo(_, ucref), _) -> Item.UnionCase(FreshenUnionCaseRef ncenv m ucref, false)
+    | Item.UnionCase(UnionCaseInfo(_, ucref), hasRequireQualifiedAttr) ->
+        Item.UnionCase(FreshenUnionCaseRef ncenv m ucref, hasRequireQualifiedAttr)
     | _ -> res
 
 
@@ -2294,7 +2297,17 @@ let rec ResolveLongIdentInTypePrim (ncenv: NameResolver) nenv lookupKind (resInf
         // Lookup: datatype constructors take precedence
         match unionCaseSearch with
         | ValueSome ucase ->
-            OneResult (success(resInfo, Item.UnionCase(ucase, false), rest))
+
+            // TODO - clean up
+
+            match ty with
+            | TType_ucase(ucr, _) ->
+                let hasRequireQualifiedAccessAttribute = HasFSharpAttribute g g.attrib_RequireQualifiedAccessAttribute ucr.Attribs
+                OneResult (success(resInfo, Item.UnionCase(ucase, hasRequireQualifiedAccessAttribute), rest))
+            | _ ->
+                OneResult (success(resInfo, Item.UnionCase(ucase, false), rest))
+
+            // TODO
         | ValueNone ->
             let anonRecdSearch =
                 match lookupKind with
@@ -3637,9 +3650,10 @@ let ResolveCompletionsInType (ncenv: NameResolver) nenv (completionTargets: Reso
         if completionTargets.ResolveAll && statics then
             match tryAppTy g ty with
             | ValueSome (tc, tinst) ->
+                let hasRequireQualifiedAccessAttribute = HasFSharpAttribute g g.attrib_RequireQualifiedAccessAttribute tc.Attribs
                 tc.UnionCasesAsRefList
                 |> List.filter (IsUnionCaseUnseen ad g ncenv.amap m >> not)
-                |> List.map (fun ucref -> Item.UnionCase(UnionCaseInfo(tinst, ucref), false))
+                |> List.map (fun ucref -> Item.UnionCase(UnionCaseInfo(tinst, ucref), hasRequireQualifiedAccessAttribute))
             | _ -> []
         else []
 
@@ -4004,7 +4018,16 @@ let rec ResolvePartialLongIdentInModuleOrNamespace (ncenv: NameResolver) nenv is
          // Collect up the accessible discriminated union cases in the module
        @ (UnionCaseRefsInModuleOrNamespace modref
           |> List.filter (IsUnionCaseUnseen ad g ncenv.amap m >> not)
-          |> List.map (fun x -> Item.UnionCase(GeneralizeUnionCaseRef x, false)))
+          |> List.map (fun x ->
+
+            // TODO - lolwut about this one
+
+            match TryFindTypeWithUnionCase modref x.Tycon.Id with
+            | Some tycon when IsTyconReprAccessible ncenv.amap m ad (modref.NestedTyconRef tycon) ->
+                let hasRequireQualifiedAccessAttribute = HasFSharpAttribute g g.attrib_RequireQualifiedAccessAttribute tycon.Attribs
+                Item.UnionCase(GeneralizeUnionCaseRef x, hasRequireQualifiedAccessAttribute)
+            | _ ->
+                Item.UnionCase(GeneralizeUnionCaseRef x, false)))
 
          // Collect up the accessible active patterns in the module
        @ (ActivePatternElemsOfModuleOrNamespace modref
@@ -4343,10 +4366,11 @@ let ResolveCompletionsInTypeForItem (ncenv: NameResolver) nenv m ad statics ty (
             if statics then
                 match tryAppTy g ty with
                 | ValueSome(tc, tinst) ->
+                    let hasRequireQualifiedAccessAttribute = HasFSharpAttribute g g.attrib_RequireQualifiedAccessAttribute tc.Attribs
                     yield!
                         tc.UnionCasesAsRefList
                         |> List.filter (IsUnionCaseUnseen ad g ncenv.amap m >> not)
-                        |> List.map (fun ucref -> Item.UnionCase(UnionCaseInfo(tinst, ucref), false))
+                        |> List.map (fun ucref -> Item.UnionCase(UnionCaseInfo(tinst, ucref), hasRequireQualifiedAccessAttribute))
                 | _ -> ()
         | Item.Event _ ->
             yield!
@@ -4592,7 +4616,15 @@ let rec ResolvePartialLongIdentInModuleOrNamespaceForItem (ncenv: NameResolver) 
                   yield!
                       UnionCaseRefsInModuleOrNamespace modref
                       |> List.filter (IsUnionCaseUnseen ad g ncenv.amap m >> not)
-                      |> List.map (fun x -> Item.UnionCase(GeneralizeUnionCaseRef x,  false))
+                      |> List.map (fun x ->                        
+                            // TODO - lolwut about this one
+                        
+                            match TryFindTypeWithUnionCase modref x.Tycon.Id with
+                            | Some tycon when IsTyconReprAccessible ncenv.amap m ad (modref.NestedTyconRef tycon) ->
+                                let hasRequireQualifiedAccessAttribute = HasFSharpAttribute g g.attrib_RequireQualifiedAccessAttribute tycon.Attribs
+                                Item.UnionCase(GeneralizeUnionCaseRef x, hasRequireQualifiedAccessAttribute)
+                            | _ ->
+                                Item.UnionCase(GeneralizeUnionCaseRef x, false))
              | Item.ActivePatternCase _ ->
              // Collect up the accessible active patterns in the module
                  yield!
