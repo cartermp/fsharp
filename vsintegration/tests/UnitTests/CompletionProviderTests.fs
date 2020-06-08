@@ -648,6 +648,22 @@ module Extensions =
 """
     VerifyCompletionList(fileContents, "wrappedMessage.", ["PrintRef"], [])
 
+
+[<Test>]
+let ``DU cases on a DU marked as RequireQualifiedAccess should not show in the completion list``() =
+    // Simulate mistyping '|>' as '|.'
+    let fileContents = """
+namespace N
+    [<RequireQualifiedAccess>]
+    type DU = A | B | C
+
+namespace global
+
+module Program =
+    let x = N.
+"""
+    VerifyCompletionList(fileContents, "N.", ["DU"], [])
+
 #if EXE
 ShouldDisplaySystemNamespace()
 #endif
