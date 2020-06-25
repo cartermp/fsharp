@@ -142,7 +142,7 @@ module TcResolutionsExtensions =
                     | Item.Value KeywordIntrinsicValue, ItemOccurence.Use, _, _, _, m ->
                         add m SemanticClassificationType.IntrinsicFunction
 
-                    | (Item.Value vref), _, _, _, _, m when isFunction g vref.Type ->
+                    | (Item.Value vref), _, _, _, _, m when isFunction g vref.Type && not (vref.IsConstructor) ->
                         if valRefEq g g.range_op_vref vref || valRefEq g g.range_step_op_vref vref then 
                             ()
                         elif vref.IsPropertyGetterMethod || vref.IsPropertySetterMethod then
