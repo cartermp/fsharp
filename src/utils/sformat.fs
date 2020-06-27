@@ -119,40 +119,38 @@ namespace Microsoft.FSharp.Text.StructuredPrintfImpl
         let toText (tt: TaggedText) = tt.Text
 
         let tagAlias t = tag LayoutTag.Alias t
-        let keywordFunctions = Set ["raise"; "reraise"; "typeof"; "typedefof"; "sizeof"; "nameof"]
-        let keywordTypes = 
-          [
-            "array"
-            "bigint"
-            "bool"
-            "byref"
-            "byte"
-            "char"
-            "decimal"
-            "double"
-            "float"
-            "float32"
-            "int"
-            "int8"
-            "int16"
-            "int32"
-            "int64"
-            "list"
-            "nativeint"
-            "obj"
-            "sbyte"
-            "seq"
-            "single"
-            "string"
-            "unit"
-            "uint"
-            "uint8"
-            "uint16"
-            "uint32"
-            "uint64"
-            "unativeint"
-          ] |> Set.ofList
-        let tagClass name = if Set.contains name keywordTypes then tag LayoutTag.Keyword name else tag LayoutTag.Class name
+        let keywordFunctions =
+            [
+                "raise"
+                "reraise"
+                "typeof"
+                "typedefof"
+                "sizeof"
+                "nameof"
+                "char"
+                "decimal"
+                "double"
+                "float"
+                "float32"
+                "int"
+                "int8"
+                "int16"
+                "int32"
+                "int64"
+                "sbyte"
+                "seq" // seq x when 'x' is a string works, for example
+                "single"
+                "string"
+                "unit"
+                "uint"
+                "uint8"
+                "uint16"
+                "uint32"
+                "uint64"
+                "unativeint"
+            ]
+            |> Set.ofList
+        let tagClass name = tag LayoutTag.Class name
         let tagUnionCase t = tag LayoutTag.UnionCase t
         let tagDelegate t = tag LayoutTag.Delegate t
         let tagEnum t = tag LayoutTag.Enum t
@@ -167,7 +165,11 @@ namespace Microsoft.FSharp.Text.StructuredPrintfImpl
         let tagMethod t = tag LayoutTag.Method t
         let tagModule t = tag LayoutTag.Module t
         let tagFunction t = tag LayoutTag.Function t
-        let tagModuleBinding name = if keywordFunctions.Contains name then tag LayoutTag.Keyword name else tag LayoutTag.ModuleBinding name
+        let tagModuleBinding name =
+            if keywordFunctions.Contains name then
+                tag LayoutTag.Function name
+            else
+                tag LayoutTag.ModuleBinding name
         let tagNamespace t = tag LayoutTag.Namespace t
         let tagNumericLiteral t = tag LayoutTag.NumericLiteral t
         let tagOperator t = tag LayoutTag.Operator t
