@@ -82,6 +82,7 @@ module TaggedTextOps =
     let tagMethod = Internal.Utilities.StructuredFormat.TaggedTextOps.tagMethod
     let tagMember = Internal.Utilities.StructuredFormat.TaggedTextOps.tag LayoutTag.Member
     let tagModule = Internal.Utilities.StructuredFormat.TaggedTextOps.tagModule
+    let tagFunction = Internal.Utilities.StructuredFormat.TaggedTextOps.tagFunction
     let tagModuleBinding = Internal.Utilities.StructuredFormat.TaggedTextOps.tagModuleBinding
     let tagNamespace = Internal.Utilities.StructuredFormat.TaggedTextOps.tagNamespace
     let tagNumericLiteral = Internal.Utilities.StructuredFormat.TaggedTextOps.tagNumericLiteral

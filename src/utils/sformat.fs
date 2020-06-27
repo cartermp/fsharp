@@ -55,6 +55,7 @@ namespace Microsoft.FSharp.Text.StructuredPrintfImpl
         | Method
         | Member
         | ModuleBinding
+        | Function
         | Module
         | Namespace
         | NumericLiteral
@@ -165,6 +166,7 @@ namespace Microsoft.FSharp.Text.StructuredPrintfImpl
         let tagRecordField t = tag LayoutTag.RecordField t
         let tagMethod t = tag LayoutTag.Method t
         let tagModule t = tag LayoutTag.Module t
+        let tagFunction t = tag LayoutTag.Function t
         let tagModuleBinding name = if keywordFunctions.Contains name then tag LayoutTag.Keyword name else tag LayoutTag.ModuleBinding name
         let tagNamespace t = tag LayoutTag.Namespace t
         let tagNumericLiteral t = tag LayoutTag.NumericLiteral t
