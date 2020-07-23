@@ -324,6 +324,22 @@ module rec RecTest2 =
     let ``can get name of literal in recursive module`` () =
         Assert.AreEqual("two", twoName)
 
+module PatternMatchingWithNameof =
+    /// Simplified version of EventStore's API
+    type RecordedEvent = { EventType: string; Data: string }
+
+    /// My concrete type:
+    type MyEvent =
+        | A of string
+        | B of string
+    let ``Can use nameof as a pattern in pattern match expression`` () =
+        let deserialize (e: RecordedEvent) : MyEvent =
+            match e.EventType with
+            | nameof A -> A "atype"
+            | nameof B -> B "btype"
+            | t -> failwithf "Invalid EventType: %s" t
+        true
+
 do test "local variable name lookup"                    (BasicNameOfTests.``local variable name lookup`` ())
 do test "local int function name"                       (BasicNameOfTests.``local int function name`` ())
 do test "local curried function name"                   (BasicNameOfTests.``local curried function name`` ())
@@ -377,6 +393,7 @@ do test "can get name of class type parameter"(GenericClassNameOfTests<int>.``ca
 do test "can get name of class type parameter"(GenericClassNameOfTests2<FSharp.Data.UnitSystems.SI.UnitSymbols.kg>.``can get name of class unit of measure type parameter`` ())
 do test "can get name of recursive literal"(RecTest.``can get name of recursive literal`` ())
 do test "can get name of literal in recursive module"(RecTest2.``can get name of literal in recursive module`` ())
+do test "can use nameof as a pattern inside pattern match expression" (PatternMatchingWithNameof.``Can use nameof as a pattern in pattern match expression``())
 
 #if TESTS_AS_APP
 let RUN() = 
