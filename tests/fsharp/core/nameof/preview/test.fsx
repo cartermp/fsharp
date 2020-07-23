@@ -240,11 +240,17 @@ type OperatorNameOfTests() =
 
     member this.``lookup name of + operator`` () =
         let b = nameof(+)
-        Assert.AreEqual("op_Addition",b)
+        Assert.AreEqual("+",b)
+        let b2 = nameof(op_Addition)
+        Assert.AreEqual("op_Addition",b2)
+        let b3 = nameof(FSharp.Core.Operators.(+))
+        Assert.AreEqual("+",b3)
+        let b4 = nameof(FSharp.Core.Operators.op_Addition)
+        Assert.AreEqual("op_Addition",b4)
 
     member this.``lookup name of |> operator`` () =
         let a = nameof(|>)
-        let result = Assert.AreEqual("op_PipeRight",a)
+        let result = Assert.AreEqual("|>",a)
         let b = nameof(op_PipeRight)
         result || Assert.AreEqual("op_PipeRight",b)
 
@@ -294,6 +300,30 @@ type Person =
         | x when x = nameof __.Age -> { __ with Age = value :?> int }
         | _ -> __
 
+type GenericClassNameOfTests<'TTT>() =
+
+    static member ``can get name of class type parameter`` () =
+        let b = nameof<'TTT>
+        Assert.AreEqual("TTT", b)
+
+type GenericClassNameOfTests2<[<Measure>] 'TTT>() =
+
+    static member ``can get name of class unit of measure type parameter`` () =
+        let b = nameof<'TTT>
+        Assert.AreEqual("TTT", b)
+
+module RecTest = 
+    let rec [<Literal>] two = 2
+    and twoName = nameof(two)
+    let ``can get name of recursive literal`` () =
+        Assert.AreEqual("two", twoName)
+
+module rec RecTest2 = 
+    let [<Literal>] two = 2
+    let twoName = nameof(two)
+    let ``can get name of literal in recursive module`` () =
+        Assert.AreEqual("two", twoName)
+
 do test "local variable name lookup"                    (BasicNameOfTests.``local variable name lookup`` ())
 do test "local int function name"                       (BasicNameOfTests.``local int function name`` ())
 do test "local curried function name"                   (BasicNameOfTests.``local curried function name`` ())
@@ -342,6 +372,11 @@ do test "use it in a generic function"                  ((NameOfOperatorForGener
 do test "lookup name of a generic class"                ((NameOfOperatorForGenerics()).``lookup name of a generic class`` ())
 
 do test "user defined nameof should shadow the operator"(UserDefinedNameOfTests.``user defined nameof should shadow the operator`` ())
+
+do test "can get name of class type parameter"(GenericClassNameOfTests<int>.``can get name of class type parameter`` ())
+do test "can get name of class type parameter"(GenericClassNameOfTests2<FSharp.Data.UnitSystems.SI.UnitSymbols.kg>.``can get name of class unit of measure type parameter`` ())
+do test "can get name of recursive literal"(RecTest.``can get name of recursive literal`` ())
+do test "can get name of literal in recursive module"(RecTest2.``can get name of literal in recursive module`` ())
 
 #if TESTS_AS_APP
 let RUN() = 
