@@ -2,6 +2,11 @@
 <xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="1.2" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 xliff-core-1.2-transitional.xsd">
   <file datatype="xml" source-language="en" target-language="it" original="../FSharp.Editor.resx">
     <body>
+      <trans-unit id="6013">
+        <source>Formatting</source>
+        <target state="new">Formatting</target>
+        <note />
+      </trans-unit>
       <trans-unit id="AddNewKeyword">
         <source>Add 'new' keyword</source>
         <target state="translated">Aggiungi la parola chiave 'new'</target>
@@ -160,16 +165,6 @@
       <trans-unit id="6012">
         <source>Advanced</source>
         <target state="translated">Avanzate</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="6013">
-        <source>CodeLens</source>
-        <target state="translated">CodeLens</target>
-        <note />
-      </trans-unit>
-      <trans-unit id="6014">
-        <source>Formatting</source>
-        <target state="translated">Formattazione</target>
         <note />
       </trans-unit>
     </body>
