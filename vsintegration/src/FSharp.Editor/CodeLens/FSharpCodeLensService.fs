@@ -356,7 +356,6 @@ type internal FSharpCodeLensService
             async {
                 try
                     do! executeCodeLenseAsync()
-                    do! Async.Sleep(100)
                 with
                 | e ->
 #if DEBUG
