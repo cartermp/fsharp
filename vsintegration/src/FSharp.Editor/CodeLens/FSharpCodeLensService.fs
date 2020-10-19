@@ -195,7 +195,7 @@ type internal FSharpCodeLensService
         }
         |> Async.Ignore
     
-    do  
+    do
         buffer.Changed.AddHandler(fun _ e -> (self.BufferChanged e))
         async {
             try

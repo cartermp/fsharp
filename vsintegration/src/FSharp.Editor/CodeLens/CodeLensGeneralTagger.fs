@@ -66,9 +66,6 @@ type CodeLensGeneralTagger (view, buffer) as self =
 
     override self.AsyncCustomLayoutOperation _ _ =
         asyncMaybe {
-            // Suspend 16 ms, instantly applying the layout to the adornment elements isn't needed 
-            // and would consume too much performance
-            do! Async.Sleep(16) |> liftAsync // Skip at least one frames
             do! Async.SwitchToContext self.UiContext |> liftAsync
             let layer = self.CodeLensLayer
 
