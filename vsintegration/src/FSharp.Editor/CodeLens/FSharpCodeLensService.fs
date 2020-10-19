@@ -171,9 +171,8 @@ type internal FSharpCodeLensService
                     let animation = 
                         DoubleAnimation(
                             To = Nullable 0.8,
-                            Duration = (TimeSpan.FromMilliseconds 1000. |> Duration.op_Implicit),
-                            EasingFunction = QuadraticEase()
-                            )
+                            Duration = Duration(TimeSpan.FromMilliseconds 1000.0),
+                            EasingFunction = QuadraticEase())
                     let sb = Storyboard()
                     Storyboard.SetTarget(sb, uiElement)
                     Storyboard.SetTargetProperty(sb, PropertyPath Control.OpacityProperty)
